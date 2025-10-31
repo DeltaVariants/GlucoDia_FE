@@ -2,6 +2,7 @@
 import React from "react";
 import dynamic from "next/dynamic";
 import type { ApexOptions } from "apexcharts";
+
 const ReactApexChart = dynamic(() => import("react-apexcharts"), { ssr: false });
 
 export default function ActivitySection({

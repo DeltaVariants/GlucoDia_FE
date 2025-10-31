@@ -6,19 +6,20 @@ import Image from "next/image";
 import { useAuth } from "@/context/AuthContext";
 
 function getInitials(name?: string, email?: string) {
-  const src = name?.trim() || email?.split("@")[0] || "";
-  const parts = src.split(" ").filter(Boolean);
+  const src = (name || email || "").trim();
+  if (!src) return "U";
+  const parts = src.split(/\s+/);
   if (parts.length >= 2) return (parts[0][0] + parts[1][0]).toUpperCase();
   if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
   return "U";
 }
 
-export default function UserDropdown() {
+export default function AuthUserMenu() {
   const { user, loading, logout } = useAuth();
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
 
-  // Đóng menu khi click ra ngoài
+  // click outside để đóng menu
   useEffect(() => {
     const onClick = (e: MouseEvent) => {
       if (!ref.current) return;
@@ -28,10 +29,9 @@ export default function UserDropdown() {
     return () => document.removeEventListener("mousedown", onClick);
   }, []);
 
+  // Loading state
   if (loading) {
-    return (
-      <div className="h-10 w-28 rounded-lg bg-gray-200 dark:bg-gray-800 animate-pulse" />
-    );
+    return <div className="h-10 w-32 rounded-lg bg-gray-200 dark:bg-gray-800 animate-pulse" />;
   }
 
   // Chưa đăng nhập → nút Sign in
@@ -46,11 +46,15 @@ export default function UserDropdown() {
     );
   }
 
-  const displayName = user.fullName || (user as any).name || user.email;
+  // Đã đăng nhập → avatar + tên + menu
+  const displayName = (user as any).fullName || (user as any).name || user.email || "User";
+  const email = user.email;
+  const role = (user as any).role;
   const avatarUrl = (user as any).avatarUrl || (user as any).avatar;
 
   return (
     <div className="relative" ref={ref}>
+      {/* Nút trigger: avatar + tên + chevron */}
       <button
         onClick={() => setOpen((s) => !s)}
         className="flex items-center gap-3 rounded-lg border border-gray-200 px-2.5 py-1.5 hover:bg-gray-50 dark:border-gray-700 dark:hover:bg-gray-800"
@@ -68,7 +72,7 @@ export default function UserDropdown() {
           />
         ) : (
           <div className="h-8 w-8 rounded-full bg-gray-900 text-white grid place-items-center text-xs">
-            {getInitials(user.fullName, user.email)}
+            {getInitials(displayName, email)}
           </div>
         )}
 
@@ -77,9 +81,9 @@ export default function UserDropdown() {
           <span className="text-sm text-gray-800 dark:text-gray-100 max-w-[160px] truncate">
             {displayName}
           </span>
-          {user?.role && (
+          {role && (
             <span className="text-xs text-gray-500 dark:text-gray-400">
-              {user.role}
+              {role}
             </span>
           )}
         </div>
@@ -98,31 +102,47 @@ export default function UserDropdown() {
         </svg>
       </button>
 
-      {/* Dropdown */}
+      {/* Dropdown menu */}
       {open && (
         <div
           role="menu"
-          className="absolute right-0 mt-2 w-56 rounded-xl border border-gray-200 bg-white p-2 shadow-xl dark:border-gray-800 dark:bg-gray-900 z-[1000]"
+          className="absolute right-0 mt-2 w-64 rounded-xl border border-gray-200 bg-white p-2 shadow-xl dark:border-gray-800 dark:bg-gray-900 z-[1000]"
         >
-          <div className="px-3 py-2">
-            <p className="text-sm font-medium text-gray-800 dark:text-gray-100 truncate">
-              {displayName}
-            </p>
-            <p className="text-xs text-gray-500 dark:text-gray-400 truncate">
-              {user?.email}
-            </p>
+          <div className="flex items-center gap-3 px-3 py-2">
+            {avatarUrl ? (
+              <Image
+                src={avatarUrl}
+                alt="avatar"
+                width={36}
+                height={36}
+                className="h-9 w-9 rounded-full object-cover"
+              />
+            ) : (
+              <div className="h-9 w-9 rounded-full bg-gray-900 text-white grid place-items-center text-xs">
+                {getInitials(displayName, email)}
+              </div>
+            )}
+            <div className="min-w-0">
+              <p className="text-sm font-medium text-gray-800 dark:text-gray-100 truncate">
+                {displayName}
+              </p>
+              <p className="text-xs text-gray-500 dark:text-gray-400 truncate">
+                {email}
+              </p>
+            </div>
           </div>
 
           <div className="my-2 h-px bg-gray-200 dark:bg-gray-800" />
 
           <Link
-            href="/others-pages/profile"
-            className="block rounded-lg px-3 py-2 text-sm hover:bg-gray-50 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-300"
-            role="menuitem"
-            onClick={() => setOpen(false)}
-          >
-            Hồ sơ cá nhân
-          </Link>
+  href="/profile"
+  className="block rounded-lg px-3 py-2 text-sm hover:bg-gray-50 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-300"
+  role="menuitem"
+  onClick={() => setOpen(false)}
+>
+  Hồ sơ cá nhân
+</Link>
+
 
           <Link
             href="/settings"
